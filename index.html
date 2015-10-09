@@ -148,7 +148,7 @@ head(sample.data)
 <span class="preprocessor">##   <span class="number">4.528492e-01</span>  -<span class="number">9.430156e-02</span>   <span class="number">5.565299e-02</span>   <span class="number">2.000000e+02</span>   <span class="number">0.000000e+00</span> </span>
 <span class="preprocessor">##     uncensored Relevant Pairs     Concordant      Uncertain </span>
 <span class="preprocessor">##   <span class="number">1.290000e+02</span>   <span class="number">3.172800e+04</span>   <span class="number">1.436800e+04</span>   <span class="number">8.072000e+03</span></span>
-</code></pre><p> <strong>rcorrcens</strong>的代码及结果,注意<strong>rcorrcens</strong>的写法是写成formula（公式）的形式，较为方便；而<strong>rcorr.cens</strong>的<br>  写法是只能在前面写上一个自变量,并且不支持data = …的写法，有点繁琐。较为遗憾的是这两种方法得到的C指数的标准误需要通过S.D./2间接得到。</p>
+</code></pre><p> <strong>rcorrcens</strong>的代码及结果,注意<strong>rcorrcens</strong>的写法是写成formula（公式）的形式，较为方便；而<strong>rcorr.cens</strong>的<br>  写法是只能在前面写上一个自变量,并且不支持<code>data = ...</code>的写法，有点繁琐。较为遗憾的是这两种方法得到的C指数的标准误需要通过<code>S.D./2</code>间接得到。</p>
 <pre><code>r &lt;- rcorrcens(Surv(os, death) ~ age + bp,data = sample.data)
 r
 <span class="preprocessor">## Somers' Rank Correlation for Censored Data    Response variable:Surv(os, death)</span>
@@ -156,7 +156,7 @@ r
 <span class="preprocessor">##         C    Dxy  aDxy    SD    Z      P   n</span>
 <span class="preprocessor">## age 0.453 -0.094 0.094 0.056 1.69 0.0902 200</span>
 <span class="preprocessor">## bp  0.498 -0.003 0.003 0.054 0.06 0.9517 200</span>
-</code></pre><h3 id="方法2"><strong>方法2</strong></h3><p>直接从<strong>survival</strong>包的函数coxph结果中输出，需要R的版本高于2.15.    </p>
+</code></pre><h3 id="方法2"><strong>方法2</strong></h3><p>直接从<code>survival</code>包的函数<code>coxph</code>结果中输出，需要R的版本高于2.15.    </p>
 <pre><code><span class="title">library</span>(survival)
 <span class="title">sum</span>.surv &lt;- summary(coxph(<span class="type">Surv</span>(os, death) ~ age + bp,<span class="typedef"><span class="keyword">data</span> = sample.<span class="keyword">data</span>))</span>
 <span class="title">c_index</span> &lt;-sum.surv$concordance
@@ -164,9 +164,9 @@ r
 
 <span class="preprocessor">## concordance.concordant            se.std(c-d) </span>
 <span class="preprocessor">##             0.54469239             0.02788881</span>
-</code></pre><p>可以看出这种方法输出了C指数，也输出了标准误，那么95%可信区间就可以通过加减1.96*se得到。并且这种</p>
+</code></pre><p>可以看出这种方法输出了C指数，也输出了标准误，那么95%可信区间就可以通过加减<code>1.96*se</code>得到。并且这种</p>
 <p>方法也适用于很多指标联合。</p>
-<h3 id="方法3"><strong>方法3</strong></h3><p>利用函数<strong>survConcordance</strong>，这种方法和方法2类似，输出的结果相同</p>
+<h3 id="方法3"><strong>方法3</strong></h3><p>利用函数<code>survConcordance</code>，这种方法和方法2类似，输出的结果相同</p>
 <pre><code>fit &lt;- coxph(Surv(os, death) ~ age + bp,data = sample.data)
 survConcordance(Surv(os, death) ~ predict(fit, sample.data))
 <span class="preprocessor">## Call:</span>
@@ -176,13 +176,13 @@ survConcordance(Surv(os, death) ~ predict(fit, sample.data))
 <span class="preprocessor">## Concordance= <span class="number">0.5446924</span> se= <span class="number">0.02788881</span></span>
 <span class="preprocessor">## concordant discordant  tied.risk  tied.time   std(c-d) </span>
 <span class="preprocessor">##  <span class="number">8641.0000</span>  <span class="number">7223.0000</span>     <span class="number">0.0000</span>     <span class="number">0.0000</span>   <span class="number">884.8563</span></span>
-</code></pre><h3 id="方法4"><strong>方法4</strong></h3><p>利用<strong>survcomp</strong>包，安装这个包我就不在这里赘述了。</p>
+</code></pre><h3 id="方法4"><strong>方法4</strong></h3><p>利用<code>survcomp</code>包，安装这个包我就不在这里赘述了。</p>
 <pre><code>library(survcomp)
 fit &lt;- coxph(Surv(os, death) ~ age + bp, data = sample.data)
 cindex &lt;- concordance.index(predict(fit),surv.time = sample.data<span class="variable">$os</span>, surv.event = sample.data<span class="variable">$death</span>,method = <span class="string">"noether"</span>)
 cindex<span class="variable">$c</span>.index; cindex<span class="variable">$lower</span>; cindex<span class="variable">$upper</span>
 </code></pre><p>这种方法的优点就是可以直接输出95%可信区间，不需要自己再进行计算。说实话语法有点繁琐，感觉不爽！</p>
-<h3 id="方法5"><strong>方法5</strong></h3><p>利用<strong>rms</strong>包中的”cph“函数和”validate“函数，可提供un-adjusted和bias adjusted C指数两种，<br>未校正的C指数的结果和方法4是相同的。</p>
+<h3 id="方法5"><strong>方法5</strong></h3><p>利用<code>rms</code>包中的<code>cph</code>函数和<code>validate</code>函数，可提供un-adjusted和bias adjusted C指数两种，<br>未校正的C指数的结果和方法4是相同的。</p>
 <pre><code>library(rms)
 <span class="preprocessor">#这里设置种子，目的是为了能重复最后的结果，因为validate函数的校正结果是随机的。但是我也发现即使设置了随机数种子，这个矫正的结果也不停在变，目前还没有找到解决办法，希望知道的大侠能给与指导。</span>
 <span class="built_in">set</span>.seed(<span class="number">1</span>)
